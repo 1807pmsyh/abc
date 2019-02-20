@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--与dao接口建立联系-->
+<mapper namespace="com.zs.pms.dao.UserDao">
+
+<select id="queryByUid" parameterType="int" resultType="TPermission">
+		select * from tpermission where id in (
+		select pid from trolepermission where rid in (
+		select rid from tuserrole where usid=#{id}))
+	</select>	
+	
+	
+	
+		<!-- 根据条件查询 -->
+	<select id="queryByCon" parameterType="QueryUser" resultType="TUser">
+	select * from tuser
+	<!-- 引入SQL片段 -->
+	<include refid="where"/>
+	
+</select>
+
+<sql id="where">
+<!-- 条件标签自动拼 -->
+	<where>
+	<!-- 登录名不为空和空串 -->
+	<if test="loginname!=null and loginname!=''">
+	and loginname=#{loginname}
+	</if>
+	<!-- 密码不为空和空串 -->
+	<if test="password!=null and password!=''">
+	and password=#{password}
+	</if>
+	<!-- 性别不为空和空串 -->
+	<if test="sex!=null and sex!=''">
+	and sex=#{sex}
+	</if>
+	</where>
+</sql>
+
+<!-- 查询的列 -->
+<sql id="selector">
+select * from tuser
+</sql>
+<!-- 排序 -->
+<sql id="order">
+ order by id desc
+</sql>
+
+<!-- 
+分页
+大于，小于的转义符
+大于> : &gt;  小于< : &lt; 
+ -->
+<sql id="page">
+<where>
+b.rn&gt;=#{start} and b.rn&lt;=#{end}
+</where>
+</sql>
+
+<!-- 分页查询 -->
+<select id="queryByPage" parameterType="QueryUser" resultType="TUser">
+	select b.* from(select rownum rn,a.* from
+	(
+	<!-- 引入SQL片段 -->
+	<include refid="selector"/>   <!-- 查询的列 -->
+	<include refid="where"/>     <!-- 查询条件 -->
+	<include refid="order"/>     <!-- 排序 -->
+	)a)b
+	<include refid="page"/>     <!-- 分页 -->
+</select>
+
+<!-- 获得总条数 -->
+<select id="queryCount" parameterType="QueryUser" resultType="int">
+	select count(1) from tuser
+	<include refid="where"/>     <!-- 查询条件  复用-->
+	
+</select>
+
+
+
+
+
+
+
+<!-- 批量删除 -->
+<delete id="deleteByIds">
+delete from tuser where id in
+
+<foreach collection="array" item="id" separator="," open="(" close=")">
+#{id}
+</foreach>
+
+</delete>
+
+<!-- 修改 -->
+<update id="updateUser" parameterType="TUser">
+update tuser
+<!-- 修改一条 -->
+<set>
+<!-- 登录名不为空和空串 -->
+<if test="loginname!=null and loginname!=''">
+	 loginname=#{loginname},
+	</if>
+	<!-- 密码不为空和空串 -->
+<if test="password!=null and password!=''">
+	 password=#{password},
+	</if>	
+<if test="sex!=null and sex!=''">
+	 sex=#{sex},
+	</if>	
+<if test="birthday!=null">
+	birthday=#{birthday},
+	</if>	
+<if test="email!=null and email!=''">
+	 email=#{email},
+	</if>		
+<if test="dept!=null">
+	 dept=#{dept.id},
+	</if>		
+<if test="realname!=null and realname!=''">
+	 realname=#{realname},
+	</if>	
+<if test="creator!=0">
+	 creator=#{creator},
+	</if>	
+	creatime=sysdate,
+<if test="updator!=0">
+	 updator=#{updator}
+	</if>
+updatime==sysdate,		
+<if test="pic!=null and pic!=''">
+	 pic=#{pic},
+	</if>	
+<if test="isenabled!=0">
+	 isenabled=#{isenabled},
+	</if>	
+						
+</set>
+where id==#{id}
+</update>
+
+<!-- 新增返回主键 -->
+<insert id="insertUser" parameterType="TUser">
+<selectKey keyProperty="id" order="BEFORE" resultType="int">
+select seq_tuser.nextval from dual
+</selectKey>
+insert into tuser(id,loginname,password,sex,birthday,email,dept,realname,creator,creatime,updator,updatime,pic,isenabled)
+values(#{id},#{loginname},#{password},#{sex},#{birthday},#{email},#{dept.id},#{realname},#{creator},sysdate,#{updator},sysdate,#{pic},#{isenabled})
+</insert>
+
+
+
+
+
+
+ </mapper>
+
+ 
+
+
